@@ -10,7 +10,7 @@
 #github-action genshdoc
 #
 # @file Preinstall
-# @brief Contains the steps necessary to configure and pacstrap the install to selected drive. 
+# @brief Contains the steps necessary to configure and pacstrap the install to selected drive.
 echo -ne "
 -------------------------------------------------------------------------
    █████╗ ██████╗  ██████╗██╗  ██╗████████╗██╗████████╗██╗   ██╗███████╗
@@ -72,7 +72,7 @@ echo -ne "
                     Creating Filesystems
 -------------------------------------------------------------------------
 "
-# @description Creates the btrfs subvolumes. 
+# @description Creates the btrfs subvolumes.
 createsubvolumes () {
     btrfs subvolume create /mnt/@
     btrfs subvolume create /mnt/@home
@@ -89,11 +89,11 @@ mountallsubvol () {
     mount -o ${MOUNT_OPTIONS},subvol=@.snapshots ${partition3} /mnt/.snapshots
 }
 
-# @description BTRFS subvolulme creation and mounting. 
+# @description BTRFS subvolulme creation and mounting.
 subvolumesetup () {
 # create nonroot subvolumes
-    createsubvolumes     
-# unmount root to remount with subvolume 
+    createsubvolumes
+# unmount root to remount with subvolume
     umount /mnt
 # mount @ subvolume
     mount -o ${MOUNT_OPTIONS},subvol=@ ${partition3} /mnt
@@ -124,7 +124,7 @@ elif [[ "${FS}" == "luks" ]]; then
     mkfs.vfat -F32 -n "EFIBOOT" ${partition2}
 # enter luks password to cryptsetup and format root partition
     echo -n "${LUKS_PASSWORD}" | cryptsetup -y -v luksFormat ${partition3} -
-# open luks container and ROOT will be place holder 
+# open luks container and ROOT will be place holder
     echo -n "${LUKS_PASSWORD}" | cryptsetup open ${partition3} ROOT -
 # now format that container
     mkfs.btrfs -L ROOT ${partition3}
@@ -151,13 +151,13 @@ echo -ne "
                     Arch Install on Main Drive
 -------------------------------------------------------------------------
 "
-pacstrap /mnt base base-devel linux linux-firmware vim nano sudo archlinux-keyring wget libnewt --noconfirm --needed
+pacstrap /mnt base base-devel linux linux-firmware vim sudo archlinux-keyring wget libnewt --noconfirm --needed
 echo "keyserver hkp://keyserver.ubuntu.com" >> /mnt/etc/pacman.d/gnupg/gpg.conf
 cp -R ${SCRIPT_DIR} /mnt/root/ArchTitus
 cp /etc/pacman.d/mirrorlist /mnt/etc/pacman.d/mirrorlist
 
 genfstab -L /mnt >> /mnt/etc/fstab
-echo " 
+echo "
   Generated /etc/fstab:
 "
 cat /mnt/etc/fstab
@@ -173,11 +173,11 @@ else
 fi
 echo -ne "
 -------------------------------------------------------------------------
-                    Checking for low memory systems <8G
+                    Checking for low memory systems <16G
 -------------------------------------------------------------------------
 "
 TOTAL_MEM=$(cat /proc/meminfo | grep -i 'memtotal' | grep -o '[[:digit:]]*')
-if [[  $TOTAL_MEM -lt 8000000 ]]; then
+if [[  $TOTAL_MEM -lt 16000000 ]]; then
     # Put swap into the actual system, not into RAM disk, otherwise there is no point in it, it'll cache RAM into RAM. So, /mnt/ everything.
     mkdir -p /mnt/opt/swap # make a dir that we can apply NOCOW to to make it btrfs-friendly.
     chattr +C /mnt/opt/swap # apply NOCOW, btrfs needs that.
