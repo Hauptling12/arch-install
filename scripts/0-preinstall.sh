@@ -1,5 +1,24 @@
 #!/usr/bin/env bash
+#-------------------------------------------------------------------------
+#   █████╗ ██████╗  ██████╗██╗  ██╗████████╗██╗████████╗██╗   ██╗███████╗
+#  ██╔══██╗██╔══██╗██╔════╝██║  ██║╚══██╔══╝██║╚══██╔══╝██║   ██║██╔════╝
+#  ███████║██████╔╝██║     ███████║   ██║   ██║   ██║   ██║   ██║███████╗
+#  ██╔══██║██╔══██╗██║     ██╔══██║   ██║   ██║   ██║   ██║   ██║╚════██║
+#  ██║  ██║██║  ██║╚██████╗██║  ██║   ██║   ██║   ██║   ╚██████╔╝███████║
+#  ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   ╚═╝   ╚═╝    ╚═════╝ ╚══════╝
+#-------------------------------------------------------------------------
+#github-action genshdoc
+#
+# @file Preinstall
+# @brief Contains the steps necessary to configure and pacstrap the install to selected drive. 
 echo -ne "
+-------------------------------------------------------------------------
+   █████╗ ██████╗  ██████╗██╗  ██╗████████╗██╗████████╗██╗   ██╗███████╗
+  ██╔══██╗██╔══██╗██╔════╝██║  ██║╚══██╔══╝██║╚══██╔══╝██║   ██║██╔════╝
+  ███████║██████╔╝██║     ███████║   ██║   ██║   ██║   ██║   ██║███████╗
+  ██╔══██║██╔══██╗██║     ██╔══██║   ██║   ██║   ██║   ██║   ██║╚════██║
+  ██║  ██║██║  ██║╚██████╗██║  ██║   ██║   ██║   ██║   ╚██████╔╝███████║
+  ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   ╚═╝   ╚═╝    ╚═════╝ ╚══════╝
 -------------------------------------------------------------------------
                     Automated Arch Linux Installer
 -------------------------------------------------------------------------
@@ -53,6 +72,7 @@ echo -ne "
                     Creating Filesystems
 -------------------------------------------------------------------------
 "
+# @description Creates the btrfs subvolumes. 
 createsubvolumes () {
     btrfs subvolume create /mnt/@
     btrfs subvolume create /mnt/@home
@@ -61,6 +81,7 @@ createsubvolumes () {
     btrfs subvolume create /mnt/@.snapshots
 }
 
+# @description Mount all btrfs subvolumes after root has been mounted.
 mountallsubvol () {
     mount -o ${MOUNT_OPTIONS},subvol=@home ${partition3} /mnt/home
     mount -o ${MOUNT_OPTIONS},subvol=@tmp ${partition3} /mnt/tmp
@@ -68,6 +89,7 @@ mountallsubvol () {
     mount -o ${MOUNT_OPTIONS},subvol=@.snapshots ${partition3} /mnt/.snapshots
 }
 
+# @description BTRFS subvolulme creation and mounting. 
 subvolumesetup () {
 # create nonroot subvolumes
     createsubvolumes     
@@ -155,7 +177,7 @@ echo -ne "
 -------------------------------------------------------------------------
 "
 TOTAL_MEM=$(cat /proc/meminfo | grep -i 'memtotal' | grep -o '[[:digit:]]*')
-if [[  $TOTAL_MEM -lt 32000000 ]]; then
+if [[  $TOTAL_MEM -lt 8000000 ]]; then
     # Put swap into the actual system, not into RAM disk, otherwise there is no point in it, it'll cache RAM into RAM. So, /mnt/ everything.
     mkdir -p /mnt/opt/swap # make a dir that we can apply NOCOW to to make it btrfs-friendly.
     chattr +C /mnt/opt/swap # apply NOCOW, btrfs needs that.

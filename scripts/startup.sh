@@ -1,22 +1,28 @@
 #!/usr/bin/env bash
-# This script will ask users about their prefrences 
-# like disk, file system, timezone, keyboard layout,
-# user name, password, etc.
+#github-action genshdoc
+#
+# @file Startup
+# @brief This script will ask users about their prefrences like disk, file system, timezone, keyboard layout, user name, password, etc.
+# @stdout Output routed to startup.log
+# @stderror Output routed to startup.log
 
-# set up a config file
+# @setting-header General Settings
+# @setting CONFIG_FILE string[$CONFIGS_DIR/setup.conf] Location of setup.conf to be used by set_option and all subsequent scripts. 
 CONFIG_FILE=$CONFIGS_DIR/setup.conf
 if [ ! -f $CONFIG_FILE ]; then # check if file exists
     touch -f $CONFIG_FILE # create file if not exists
 fi
 
-# set options in setup.conf
+# @description set options in setup.conf
+# @arg $1 string Configuration variable.
+# @arg $2 string Configuration value.
 set_option() {
     if grep -Eq "^${1}.*" $CONFIG_FILE; then # check if option exists
         sed -i -e "/^${1}.*/d" $CONFIG_FILE # delete option if exists
     fi
     echo "${1}=${2}" >>$CONFIG_FILE # add option
 }
-# Renders a text based list of options that can be selected by the
+# @description Renders a text based list of options that can be selected by the
 # user using up, down and enter keys and returns the chosen option.
 #
 #   Arguments   : list of options, maximum of 256
@@ -125,17 +131,26 @@ select_option() {
 
     return $(( $active_col + $active_row * $colmax ))
 }
+# @description Displays ArchTitus logo
+# @noargs
 logo () {
 # This will be shown on every set as user is progressing
 echo -ne "
 -------------------------------------------------------------------------
+ █████╗ ██████╗  ██████╗██╗  ██╗████████╗██╗████████╗██╗   ██╗███████╗
+██╔══██╗██╔══██╗██╔════╝██║  ██║╚══██╔══╝██║╚══██╔══╝██║   ██║██╔════╝
+███████║██████╔╝██║     ███████║   ██║   ██║   ██║   ██║   ██║███████╗
+██╔══██║██╔══██╗██║     ██╔══██║   ██║   ██║   ██║   ██║   ██║╚════██║
+██║  ██║██║  ██║╚██████╗██║  ██║   ██║   ██║   ██║   ╚██████╔╝███████║
+╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   ╚═╝   ╚═╝    ╚═════╝ ╚══════╝
+------------------------------------------------------------------------
             Please select presetup settings for your system              
 ------------------------------------------------------------------------
 "
 }
-filesystem () {
-# This function will handle file systems. At this movement we are handling only
+# @description This function will handle file systems. At this movement we are handling only
 # btrfs and ext4. Others will be added in future.
+filesystem () {
 echo -ne "
 Please Select your file system for both boot and root
 "
@@ -166,6 +181,7 @@ done
 *) echo "Wrong option please select again"; filesystem;;
 esac
 }
+# @description Detects and sets timezone. 
 timezone () {
 # Added this from arch wiki https://wiki.archlinux.org/title/System_time
 time_zone="$(curl --fail https://ipapi.co/timezone)"
@@ -188,6 +204,7 @@ case ${options[$?]} in
     *) echo "Wrong option. Try again";timezone;;
 esac
 }
+# @description Set user's keyboard mapping. 
 keymap () {
 echo -ne "
 Please select key board layout from this list"
@@ -201,6 +218,7 @@ echo -ne "Your key boards layout: ${keymap} \n"
 set_option KEYMAP $keymap
 }
 
+# @description Choose whether drive is SSD or not.
 drivessd () {
 echo -ne "
 Is this an ssd? yes/no:
@@ -218,7 +236,7 @@ case ${options[$?]} in
 esac
 }
 
-# selection for disk type
+# @description Disk selection for drive to be used with installation.
 diskpart () {
 echo -ne "
 ------------------------------------------------------------------------
@@ -241,6 +259,8 @@ echo -e "\n${disk%|*} selected \n"
 
 drivessd
 }
+
+# @description Gather username and password to be used for installation. 
 userinfo () {
 read -p "Please enter your username: " username
 set_option USERNAME ${username,,} # convert to lower case as in issue #109 
@@ -262,24 +282,67 @@ read -rep "Please enter your hostname: " nameofmachine
 set_option NAME_OF_MACHINE $nameofmachine
 }
 
+# @description Choose AUR helper. 
+aurhelper () {
+  # Let the user choose AUR helper from predefined list
+  echo -ne "Please enter your desired AUR helper:\n"
+  options=(paru yay picaur aura trizen pacaur none)
+  select_option $? 4 "${options[@]}"
+  aur_helper=${options[$?]}
+  set_option AUR_HELPER $aur_helper
+}
 
+# @description Choose Desktop Environment
+desktopenv () {
+  # Let the user choose Desktop Enviroment from predefined list
+  echo -ne "Please select your desired Desktop Enviroment:\n"
+  options=(gnome kde cinnamon xfce mate budgie lxde deepin openbox server)
+  select_option $? 4 "${options[@]}"
+  desktop_env=${options[$?]}
+  set_option DESKTOP_ENV $desktop_env
+}
+
+# @description Choose whether to do full or minimal installation. 
+installtype () {
+  echo -ne "Please select type of installation:\n\n
+  Full install: Installs full featured desktop enviroment, with added apps and themes needed for everyday use\n
+  Minimal Install: Installs only apps few selected apps to get you started\n"
+  options=(FULL MINIMAL)
+  select_option $? 4 "${options[@]}"
+  install_type=${options[$?]}
+  set_option INSTALL_TYPE $install_type
+}
 
 # More features in future
 # language (){}
 
 # Starting functions
+clear
 logo
 userinfo
+clear
 logo
+desktopenv
 # Set fixed options that installation uses if user choses server installation
+set_option INSTALL_TYPE MINIMAL
+set_option AUR_HELPER NONE
+if [[ ! $desktop_env == server ]]; then
+  clear
   logo
+  aurhelper
+  clear
   logo
   installtype
+fi
+clear
 logo
 diskpart
+clear
 logo
 filesystem
+clear
 logo
 timezone
+clear
 logo
 keymap

@@ -1,3 +1,2 @@
 --END OF MINIMAL INSTALL--
-bridge-utils
-vde2
+nerd-fonts-fira-code
